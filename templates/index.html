@@ -20,6 +20,23 @@
             <input class="form-check-input" type="checkbox" name="sponsored" value="off" id="sponsored">
             <label class="form-check-label" for="sponsored">Enabled Sponsored</label>
           </div>
+          <div class="input-group mb-3">
+            <label for="sorting" class="form-label">Sort By:</label>
+            <select name="sorting" id="sorting" class="form-control">
+              <option value="asc">Ascending</option>
+              <option value="desc">Descending</option>
+              <option value="date">Date</option>
+              <option value="relevanca">Relevance</option>
+            </select>
+          </div>
+          <div class="input-group mb-3">
+            <label for="priceFrom" class="form-label">Price From:</label>
+            <input type="number" name="priceFrom" id="priceFrom" class="form-control" placeholder="From">
+          </div>
+          <div class="input-group mb-3">
+            <label for="priceTo" class="form-label">Price To:</label>
+            <input type="number" name="priceTo" id="priceTo" class="form-control" placeholder="To">
+          </div>
           <button type="submit" class="btn btn-primary">Search</submit>
         </form>
       </div>
