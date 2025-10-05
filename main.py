@@ -120,13 +120,20 @@ def main():
 
 @app.route("/search", methods=["POST"])
 def search():
-    url = request.form["url"]
-    # pages param removed; infinite paging loads as needed
+    # user selects domain and enters query
+    domain = request.form.get("domain", "ro")
+    query = request.form.get("query", "").strip()
     sponsored = request.form.get("sponsored")
     # capture raw sort selection for repopulating form
     sort_raw = request.form.get("sorting")
     from_price = request.form.get("priceFrom")
     to_price = request.form.get("priceTo")
+    # build OLX URL based on domain and query
+    formatted = query.lower().replace(' ', '-')
+    if domain == 'pl':
+        url = f"https://www.olx.pl/oferty/q-{formatted}"
+    else:
+        url = f"https://www.olx.ro/oferte/q-{formatted}/"
     # translate raw sort to query code
     if sort_raw == "asc":
         sort_code = Sorting.ASC
@@ -138,7 +145,7 @@ def search():
         sort_code = Sorting.RELEVANCE
     else:
         sort_code = None
-    # only fetch initial page of results
+    # fetch first page
     config = Config(
         url=url,
         pages=1,
@@ -154,10 +161,12 @@ def search():
         if len(offer.photos) > 1:
             print(offer)
     # render offers page and re-fill previous inputs
+    # render offers page and re-fill fields
     return render_template(
         "offers.html",
         offers=offers,
-        url=url,
+        domain=domain,
+        query=query,
         sponsored=sponsored,
         sorting=sort_raw,
         priceFrom=from_price,

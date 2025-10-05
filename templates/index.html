@@ -15,7 +15,14 @@
             <form action="/search" method="post"
                 class="d-flex flex-wrap justify-content-between align-items-center mb-3">
                 <div class="input-group mb-3">
-                    <input type="text" name="url" class="form-control" placeholder="URL">
+                    <label class="input-group-text" for="domain">OLX Locale</label>
+                    <select class="form-select" name="domain" id="domain">
+                        <option value="ro">Romania (.ro)</option>
+                        <option value="pl">Poland (.pl)</option>
+                    </select>
+                </div>
+                <div class="input-group mb-3">
+                    <input type="text" name="query" class="form-control" placeholder="Search term">
                 </div>
                 <div class="form-check form-switch mb-3">
                     <input class="form-check-input" type="checkbox" name="sponsored" value="off" id="sponsored">
