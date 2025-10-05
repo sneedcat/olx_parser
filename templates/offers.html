@@ -25,8 +25,14 @@
     <div class="container py-4">
         <div class="card mb-4 shadow-sm p-3">
             <form action="/search" method="post" class="row g-2">
-                <div class="col-12 col-md-6 col-lg-4">
-                    <input type="text" name="url" class="form-control" placeholder="URL" value="{{ url }}">
+                <div class="col-12 col-md-3">
+                    <select class="form-select" name="domain">
+                        <option value="ro" {% if domain=='ro' %}selected{% endif %}>.ro</option>
+                        <option value="pl" {% if domain=='pl' %}selected{% endif %}>.pl</option>
+                    </select>
+                </div>
+                <div class="col-12 col-md-9">
+                    <input type="text" name="query" class="form-control" placeholder="Search term" value="{{ query }}">
                 </div>
                 <div class="col-6 col-md-3 col-lg-2 d-flex align-items-center">
                     <div class="form-check form-switch">
@@ -101,7 +107,8 @@
         loadMoreBtn.addEventListener('click', () => {
             currentPage++;
             const params = new URLSearchParams({
-                url: '{{ url }}',
+                domain: '{{ domain }}',
+                query: '{{ query }}',
                 page: currentPage,
                 sponsored: '{{ sponsored }}',
                 sorting: '{{ sorting }}',
