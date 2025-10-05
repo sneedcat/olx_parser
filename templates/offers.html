@@ -106,17 +106,17 @@
     <script>
         let currentPage = 1;
         // toggle description
-        document.addEventListener('click', function(e) {
-          if (e.target.classList.contains('see-more')) {
-            const btn = e.target;
-            const card = btn.closest('.card-body');
-            const shortDesc = card.querySelector('.description-short');
-            const fullDesc = card.querySelector('.description-full');
-            const isHidden = fullDesc.classList.contains('d-none');
-            fullDesc.classList.toggle('d-none', !isHidden);
-            shortDesc.classList.toggle('d-none', isHidden);
-            btn.textContent = isHidden ? 'See Less' : 'See More';
-          }
+        document.addEventListener('click', function (e) {
+            if (e.target.classList.contains('see-more')) {
+                const btn = e.target;
+                const card = btn.closest('.card-body');
+                const shortDesc = card.querySelector('.description-short');
+                const fullDesc = card.querySelector('.description-full');
+                const isHidden = fullDesc.classList.contains('d-none');
+                fullDesc.classList.toggle('d-none', !isHidden);
+                shortDesc.classList.toggle('d-none', isHidden);
+                btn.textContent = isHidden ? 'See Less' : 'See More';
+            }
         });
         const loadMoreBtn = document.getElementById('load-more');
         loadMoreBtn.addEventListener('click', () => {
