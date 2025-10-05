@@ -1,11 +1,12 @@
-from dataclasses import dataclass
-from typing import List, Optional
-import urllib3
-import re
 import json
+import re
 import urllib.parse
-from flask import Flask, render_template, request
+from dataclasses import dataclass
 from multiprocessing import Pool
+from typing import List, Optional
+
+import urllib3
+from flask import Flask, render_template, request
 
 
 @dataclass
@@ -28,6 +29,7 @@ class Offer:
     location: str
     searchReason: str
 
+
 @dataclass
 class Config:
     url: str
@@ -36,6 +38,7 @@ class Config:
     sorting: Optional[str]
     from_price: Optional[float]
     to_price: Optional[float]
+
 
 class Sorting:
     ASC = "filter_float_price%3Aasc"
@@ -133,24 +136,28 @@ def main():
 @app.route("/search", methods=["POST"])
 def search():
     url = request.form["url"]
-    pages = int(request.form["pages"])
+    pages = int(request.form["pages"] or 1)
     sponsored = request.form.get("sponsored")
-    sorting = request.form.get("sorting")
+    # capture raw sort selection for repopulating form
+    sort_raw = request.form.get("sorting")
     from_price = request.form.get("priceFrom")
     to_price = request.form.get("priceTo")
-    if sorting == "asc":
-        sorting = Sorting.ASC
-    elif sorting == "desc":
-        sorting = Sorting.DESC
-    elif sorting == "date":
-        sorting = Sorting.DATE
-    elif sorting == "relevance":
-        sorting = Sorting.RELEVANCE
+    # translate raw sort to query code
+    if sort_raw == "asc":
+        sort_code = Sorting.ASC
+    elif sort_raw == "desc":
+        sort_code = Sorting.DESC
+    elif sort_raw == "date":
+        sort_code = Sorting.DATE
+    elif sort_raw == "relevance":
+        sort_code = Sorting.RELEVANCE
+    else:
+        sort_code = None
     config = Config(
         url=url,
         pages=pages,
         sponsored=sponsored,
-        sorting=sorting,
+        sorting=sort_code,
         from_price=from_price,
         to_price=to_price,
     )
@@ -160,4 +167,14 @@ def search():
     for offer in offers:
         if len(offer.photos) > 1:
             print(offer)
-    return render_template("offers.html", offers=offers)
+    # render offers page and re-fill previous inputs
+    return render_template(
+        "offers.html",
+        offers=offers,
+        url=url,
+        pages=pages,
+        sponsored=sponsored,
+        sorting=sort_raw,
+        priceFrom=from_price,
+        priceTo=to_price,
+    )
