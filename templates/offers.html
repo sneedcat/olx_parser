@@ -28,25 +28,24 @@
                 <div class="col-12 col-md-6 col-lg-4">
                     <input type="text" name="url" class="form-control" placeholder="URL" value="{{ url }}">
                 </div>
-                <div class="col-6 col-md-3 col-lg-2">
-                    <input type="number" name="pages" class="form-control" placeholder="Pages" value="{{ pages }}">
-                </div>
                 <div class="col-6 col-md-3 col-lg-2 d-flex align-items-center">
                     <div class="form-check form-switch">
-                        <input class="form-check-input" type="checkbox" name="sponsored" id="sponsored" {% if sponsored %}checked{% endif %}>
+                        <input class="form-check-input" type="checkbox" name="sponsored" id="sponsored" {% if sponsored
+                            %}checked{% endif %}>
                         <label class="form-check-label" for="sponsored">Sponsored</label>
                     </div>
                 </div>
                 <div class="col-6 col-md-4 col-lg-2">
                     <select name="sorting" class="form-select">
-                        <option value="asc" {% if sorting == 'asc' %}selected{% endif %}>Price ↑</option>
-                        <option value="desc" {% if sorting == 'desc' %}selected{% endif %}>Price ↓</option>
-                        <option value="date" {% if sorting == 'date' %}selected{% endif %}>Date</option>
-                        <option value="relevance" {% if sorting == 'relevance' %}selected{% endif %}>Relevance</option>
+                        <option value="asc" {% if sorting=='asc' %}selected{% endif %}>Price ↑</option>
+                        <option value="desc" {% if sorting=='desc' %}selected{% endif %}>Price ↓</option>
+                        <option value="date" {% if sorting=='date' %}selected{% endif %}>Date</option>
+                        <option value="relevance" {% if sorting=='relevance' %}selected{% endif %}>Relevance</option>
                     </select>
                 </div>
                 <div class="col-6 col-md-4 col-lg-2">
-                    <input type="number" name="priceFrom" class="form-control" placeholder="Min" value="{{ priceFrom }}">
+                    <input type="number" name="priceFrom" class="form-control" placeholder="Min"
+                        value="{{ priceFrom }}">
                 </div>
                 <div class="col-6 col-md-4 col-lg-2">
                     <input type="number" name="priceTo" class="form-control" placeholder="Max" value="{{ priceTo }}">
@@ -91,8 +90,60 @@
             </div>
             {% endfor %}
         </div>
+        <div class="text-center">
+            <button id="load-more" class="btn btn-primary my-4">Load More</button>
+        </div>
     </div>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.4/js/lightbox-plus-jquery.min.js"></script>
+    <script>
+        let currentPage = 1;
+        const loadMoreBtn = document.getElementById('load-more');
+        loadMoreBtn.addEventListener('click', () => {
+            currentPage++;
+            const params = new URLSearchParams({
+                url: '{{ url }}',
+                page: currentPage,
+                sponsored: '{{ sponsored }}',
+                sorting: '{{ sorting }}',
+                priceFrom: '{{ priceFrom }}',
+                priceTo: '{{ priceTo }}'
+            });
+            fetch(`/load_more?${params}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (!data.offers.length) {
+                        loadMoreBtn.disabled = true;
+                        loadMoreBtn.textContent = 'No more results';
+                        return;
+                    }
+                    const grid = document.querySelector('.row.row-cols-1.row-cols-sm-2.row-cols-md-3');
+                    data.offers.forEach(offer => {
+                        const col = document.createElement('div');
+                        col.className = 'col';
+                        col.innerHTML = `
+                <div class="card h-100 shadow-sm">
+                  ${offer.photos && offer.photos.length ? `
+                    <a href="${offer.photos[0]}" data-lightbox="offer-${offer.id}">
+                      <img src="${offer.photos[0]}" class="card-img-top" alt="${offer.title}">
+                    </a>
+                    ${offer.photos.slice(1).map(photo => `<a href="${photo}" data-lightbox="offer-${offer.id}" class="d-none"><img src="${photo}" alt="${offer.title}"></a>`).join('')}
+                  ` : ''}
+                  <div class="card-body d-flex flex-column">
+                    <h5 class="card-title">${offer.title}</h5>
+                    <p class="card-text text-truncate">${offer.description}</p>
+                    <p class="mb-1 text-muted small">${offer.location}</p>
+                    <div class="mt-auto d-flex justify-content-between align-items-center">
+                      <a href="${offer.url}" class="btn btn-sm btn-outline-primary">View</a>
+                      <span class="fw-bold">${offer.price ? `${offer.price} ${offer.priceCurrency}` : (offer.exchange ? 'Exchange' : 'N/A')}</span>
+                    </div>
+                  </div>
+                </div>
+              `;
+                        grid.appendChild(col);
+                    });
+                });
+        });
+    </script>
 </body>
 
 </html>
