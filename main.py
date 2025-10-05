@@ -1,12 +1,11 @@
 import json
 import re
 import urllib.parse
-from dataclasses import dataclass
-from multiprocessing import Pool
+from dataclasses import asdict, dataclass
 from typing import List, Optional
 
 import urllib3
-from flask import Flask, render_template, request
+from flask import Flask, jsonify, render_template, request
 
 
 @dataclass
@@ -111,20 +110,6 @@ def fetch_page(config: Config, page_number: int):
     return parse(data)  # Replace with your parsing logic
 
 
-def get_multiple_pages(config: Config) -> List[Offer]:
-    offers = []
-    with Pool(processes=config.pages) as pool:
-        # Submit tasks for fetching each page
-        results = pool.starmap(
-            fetch_page,
-            [(config, page_number) for page_number in range(1, config.pages + 1)],
-        )
-        offers = [
-            item for sublist in results for item in sublist
-        ]  # Flatten nested list
-    return offers
-
-
 app = Flask(__name__)
 
 
@@ -136,7 +121,7 @@ def main():
 @app.route("/search", methods=["POST"])
 def search():
     url = request.form["url"]
-    pages = int(request.form["pages"] or 1)
+    # pages param removed; infinite paging loads as needed
     sponsored = request.form.get("sponsored")
     # capture raw sort selection for repopulating form
     sort_raw = request.form.get("sorting")
@@ -153,15 +138,16 @@ def search():
         sort_code = Sorting.RELEVANCE
     else:
         sort_code = None
+    # only fetch initial page of results
     config = Config(
         url=url,
-        pages=pages,
+        pages=1,
         sponsored=sponsored,
         sorting=sort_code,
         from_price=from_price,
         to_price=to_price,
     )
-    offers = get_multiple_pages(config)
+    offers = fetch_page(config, 1)
     if not sponsored:
         offers = [offer for offer in offers if not offer.isPromoted]
     for offer in offers:
@@ -172,9 +158,42 @@ def search():
         "offers.html",
         offers=offers,
         url=url,
-        pages=pages,
         sponsored=sponsored,
         sorting=sort_raw,
         priceFrom=from_price,
         priceTo=to_price,
     )
+
+
+@app.route("/load_more")
+def load_more():
+    # fetch next page based on query params
+    url = request.args.get("url")
+    page = int(request.args.get("page", 1))
+    sponsored = request.args.get("sponsored")
+    sort_raw = request.args.get("sorting")
+    from_price = request.args.get("priceFrom")
+    to_price = request.args.get("priceTo")
+    # translate sort code
+    if sort_raw == "asc":
+        sort_code = Sorting.ASC
+    elif sort_raw == "desc":
+        sort_code = Sorting.DESC
+    elif sort_raw == "date":
+        sort_code = Sorting.DATE
+    elif sort_raw == "relevance":
+        sort_code = Sorting.RELEVANCE
+    else:
+        sort_code = None
+    config = Config(
+        url=url,
+        pages=1,
+        sponsored=sponsored,
+        sorting=sort_code,
+        from_price=from_price,
+        to_price=to_price,
+    )
+    offers = fetch_page(config, page)
+    if not sponsored:
+        offers = [o for o in offers if not o.isPromoted]
+    return jsonify(offers=[asdict(o) for o in offers])
