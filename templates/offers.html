@@ -77,7 +77,9 @@
                     {% endif %}
                     <div class="card-body d-flex flex-column">
                         <h5 class="card-title">{{ offer.title }}</h5>
-                        <p class="card-text text-truncate">{{ offer.description|safe }}</p>
+                        <p class="card-text description-short">{{ offer.description|truncate(100)|safe }}</p>
+                        <p class="card-text description-full d-none">{{ offer.description|safe }}</p>
+                        <button type="button" class="btn btn-sm btn-link see-more">See More</button>
                         <p class="mb-1 text-muted small">{{ offer.location }}</p>
                         <div class="mt-auto d-flex justify-content-between align-items-center">
                             <a href="{{offer.url}}" class="btn btn-sm btn-outline-primary">View</a>
@@ -103,6 +105,19 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.4/js/lightbox-plus-jquery.min.js"></script>
     <script>
         let currentPage = 1;
+        // toggle description
+        document.addEventListener('click', function(e) {
+          if (e.target.classList.contains('see-more')) {
+            const btn = e.target;
+            const card = btn.closest('.card-body');
+            const shortDesc = card.querySelector('.description-short');
+            const fullDesc = card.querySelector('.description-full');
+            const isHidden = fullDesc.classList.contains('d-none');
+            fullDesc.classList.toggle('d-none', !isHidden);
+            shortDesc.classList.toggle('d-none', isHidden);
+            btn.textContent = isHidden ? 'See Less' : 'See More';
+          }
+        });
         const loadMoreBtn = document.getElementById('load-more');
         loadMoreBtn.addEventListener('click', () => {
             currentPage++;
