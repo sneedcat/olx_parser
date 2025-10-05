@@ -1,4 +1,5 @@
 import json
+import logging
 import re
 import urllib.parse
 from dataclasses import asdict, dataclass
@@ -104,13 +105,19 @@ def fetch_page(config: Config, page_number: int):
         url += f"&search[filter_float_price%3Afrom]={config.from_price}"
     if config.to_price:
         url += f"&search[filter_float_price%3Ato]={config.to_price}"
-    print(url)
-    request = urllib3.request("GET", url)
-    data = request.data.decode("utf-8")
-    return parse(data)  # Replace with your parsing logic
+    logger.info(f"Fetching page {page_number}: {url}")
+    try:
+        resp = urllib3.request("GET", url)
+        data = resp.data.decode("utf-8")
+        return parse(data)
+    except Exception:
+        logger.exception(f"Error retrieving page {page_number} from {url}")
+        return []
 
 
 app = Flask(__name__)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s: %(message)s")
+logger = logging.getLogger(__name__)
 
 
 @app.route("/")
@@ -129,8 +136,8 @@ def search():
     from_price = request.form.get("priceFrom")
     to_price = request.form.get("priceTo")
     # build OLX URL based on domain and query
-    formatted = query.lower().replace(' ', '-')
-    if domain == 'pl':
+    formatted = query.lower().replace(" ", "-")
+    if domain == "pl":
         url = f"https://www.olx.pl/oferty/q-{formatted}"
     else:
         url = f"https://www.olx.ro/oferte/q-{formatted}/"
@@ -206,3 +213,9 @@ def load_more():
     if not sponsored:
         offers = [o for o in offers if not o.isPromoted]
     return jsonify(offers=[asdict(o) for o in offers])
+
+
+@app.errorhandler(404)
+def page_not_found(e):
+    logger.warning(f"404 at {request.path}")
+    return render_template("404.html"), 404
